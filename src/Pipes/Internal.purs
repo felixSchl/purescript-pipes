@@ -50,3 +50,17 @@ instance semigroupProxy :: (Monad m, Semigroup r) => Semigroup (Proxy a' a b' b 
 
 instance monadTransProxy :: MonadTrans (Proxy a' a b' b) where
   lift m = M (Pure <$> m)
+
+observe :: forall m a' a b' b m r
+        .  Monad m => Proxy a' a b' b m r -> Proxy a' a b' b m r
+observe p0 = M (go p0) where
+    go p = case p of
+        Request a' fa  -> return (Request a' (observe <<< fa))
+        Respond b  fb' -> return (Respond b  (observe <<< fb'))
+        M           m  -> m >>= go
+        Pure        r  -> return (Pure r)
+
+newtype X = X X
+
+closed :: forall a. X -> a
+closed (X x) = closed x
