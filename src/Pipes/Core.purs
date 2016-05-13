@@ -89,6 +89,23 @@ runEffect = go
 respond :: forall m a a' x x'. Monad m => a -> Proxy x' x a' a m a'
 respond a = Respond a Pure
 
+infixl 3 composeResponse         as //>
+infixr 4 composeResponse'        as />/
+infixl 5 composeRequest          as >\\
+infixr 4 composeRequest'         as \>\
+infixr 6 composePull'            as +>>
+infixl 7 composePull             as >+>
+infixl 7 composePush'            as >>~
+infixr 8 composePush             as >~>
+infixl 4 flippedComposeResponse' as \<\
+infixr 4 flippedComposeRequest'  as /</
+infixl 8 flippedComposePush      as <~<
+infixr 7 flippedComposePull      as <+<
+infixr 3 flippedComposeResponse  as <\\
+infixl 4 flippedComposeRequest   as //<
+infixr 7 flippedComposePush'     as ~<<
+infixl 6 flippedComposePull'     as <<+
+
 composeResponse
     :: forall m x x' a' b b' c c'
      . Monad m
@@ -111,12 +128,10 @@ composeResponse'
     -> (a -> Proxy x' x c' c m a')
 composeResponse' fa fb a = fa a //> fb
 
-infixl 3 composeResponse  as //>
-infixr 4 composeResponse' as />/
-
 request :: forall a a' y y' m. Monad m => a' -> Proxy a' a y' y m a
 request a' = Request a' Pure
 
+-- (>\\)
 composeRequest
   :: forall a a' b b' c y y' m
    . Monad m
@@ -131,17 +146,14 @@ composeRequest fb' p0 = go p0
         M          m   -> M (go <$> m)
         Pure       a   -> Pure a
 
+-- (\>\)
 composeRequest'
   :: forall a a' b b' c c' y y' m
    . Monad m
   => (b' -> Proxy a' a y' y m b)
   -> (c' -> Proxy b' b y' y m c)
   -> (c' -> Proxy a' a y' y m c)
-composeRequest' fb' fc' c' = fb' >\\ fc' c'
-
-infixl 5 composeRequest  as >\\
-infixr 4 composeRequest' as \>\
-
+composeRequest' fb' fc' c' = fb' `composeRequest` fc' c'
 
 pull :: forall a a' m r. Monad m => a' -> Proxy a' a a' a m r
 pull = go
@@ -168,9 +180,6 @@ composePull' fb' p = case p of
     M          m   -> M ((fb' +>> _) <$> m)
     Pure       r   -> Pure r
 
-infixr 6 composePull' as +>>
-infixl 7 composePull  as >+>
-
 push :: forall a a' m r. Monad m => a -> Proxy a' a a' a m r
 push = go
   where
@@ -196,9 +205,6 @@ composePush' p fb = case p of
     M          m   -> M (m >>= \p' -> return (p' >>~ fb))
     Pure       r   -> Pure r
 
-infixl 7 composePush' as >>~
-infixr 8 composePush  as >~>
-
 reflect
   :: forall a a' b b' m r
    . Monad m
@@ -220,8 +226,6 @@ flippedComposeResponse'
     -> (a -> Proxy x' x c' c m a')
 flippedComposeResponse' p1 p2 = p2 />/ p1
 
-infixl 4 flippedComposeResponse' as \<\
-
 -- | Equivalent to ('\>\') with the arguments flipped
 flippedComposeRequest'
   :: forall a a' b b' c c' y y' m
@@ -230,8 +234,6 @@ flippedComposeRequest'
     -> (b' -> Proxy a' a y' y m b)
     -> (c' -> Proxy a' a y' y m c)
 flippedComposeRequest' p1 p2 = p2 \>\ p1
-
-infixr 4 flippedComposeRequest' as /</
 
 -- | Equivalent to ('>~>') with the arguments flipped
 flippedComposePush
@@ -242,8 +244,6 @@ flippedComposePush
     -> (a -> Proxy a' a c' c m r)
 flippedComposePush p1 p2 = p2 >~> p1
 
-infixl 8 flippedComposePush as <~<
-
 -- | Equivalent to ('>+>') with the arguments flipped
 flippedComposePull
     :: forall a a' b b' c c' m r
@@ -252,8 +252,6 @@ flippedComposePull
     -> (b' -> Proxy a' a b' b m r)
     -> (c' -> Proxy a' a c' c m r)
 flippedComposePull p1 p2 = p2 >+> p1
-
-infixr 7 flippedComposePull as <+<
 
 -- | Equivalent to ('//>') with the arguments flipped
 flippedComposeResponse
@@ -264,8 +262,6 @@ flippedComposeResponse
     ->       Proxy x' x c' c m a'
 flippedComposeResponse f p = p //> f
 
-infixr 3 flippedComposeResponse as <\\
-
 -- | Equivalent to ('>\\') with the arguments flipped
 flippedComposeRequest
   :: forall a a' b b' c y y' m
@@ -274,8 +270,6 @@ flippedComposeRequest
     -> (b' -> Proxy a' a y' y m b)
     ->        Proxy a' a y' y m c
 flippedComposeRequest p f = f >\\ p
-
-infixl 4 flippedComposeRequest as //<
 
 -- | Equivalent to ('>>~') with the arguments flipped
 flippedComposePush'
@@ -286,8 +280,6 @@ flippedComposePush'
     ->        Proxy a' a c' c m r
 flippedComposePush' k p = p >>~ k
 
-infixr 7 flippedComposePush' as ~<<
-
 -- | Equivalent to ('+>>') with the arguments flipped
 flippedComposePull'
     :: forall a a' b b' c c' m r
@@ -296,5 +288,3 @@ flippedComposePull'
     -> (b'  -> Proxy a' a b' b m r)
     ->         Proxy a' a c' c m r
 flippedComposePull' k p = p +>> k
-
-infixl 6 flippedComposePull' as <<+
