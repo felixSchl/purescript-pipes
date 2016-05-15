@@ -37,6 +37,8 @@ instance bindProxy :: (Monad m) => Bind (Proxy a' a b' b m) where
       M           m  -> M          (go <$> m)
       Pure        r  -> f r
 
+instance monadProxy :: (Monad m) => Monad (Proxy a' a b' b m) where
+
 instance monoidProxy :: (Monad m, Monoid r) => Monoid (Proxy a' a b' b m r) where
   mempty = Pure mempty
 

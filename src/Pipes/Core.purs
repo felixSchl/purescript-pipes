@@ -42,6 +42,11 @@ module Pipes.Core (
   , Consumer
   , Client
   , Server
+  , Effect_
+  , Producer_
+  , Consumer_
+  , Client_
+  , Server_
 
   -- * Flipped operators
   , flippedComposeResponse'
@@ -73,9 +78,14 @@ type Effect      = Proxy X Unit Unit X
 type Producer b  = Proxy X Unit Unit b
 type Pipe a b    = Proxy Unit a Unit b
 type Consumer a  = Proxy Unit a Unit X
-
 type Client a' a = Proxy a' a Unit X
 type Server b' b = Proxy X Unit b' b
+
+type Effect_        m r = forall x' x y' y. Proxy x'   x y'   y m r
+type Producer_ b    m r = forall x' x.      Proxy x'   x Unit b m r
+type Consumer_ a    m r = forall y' y.      Proxy Unit a y'   y m r
+type Server_   b' b m r = forall x' x.      Proxy x'   x b'   b m r
+type Client_   a' a m r = forall y' y.      Proxy a'   a y'   y m r
 
 runEffect :: forall m r. Monad m => Effect m r -> m r
 runEffect = go

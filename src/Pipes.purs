@@ -3,14 +3,18 @@ module Pipes where
 import Prelude
 import Pipes.Core
 import Pipes.Internal (Proxy(..))
+import Data.Foldable (class Foldable)
+import Data.Tuple (Tuple(..))
+import Data.Either (Either(..))
+import Data.Foldable as F
 
 infixl 4 composeLoopBodies' as <~
 infixr 4 composeLoopBodies  as ~>
 infixr 5 replaceAwait       as >~
 infixl 5 replaceAwait'      as ~<
--- infixl 7 composePipes       as >->
--- infixr 7 composePipes'      as <-<
---
+infixl 7 composePipes       as >->
+infixr 7 composePipes'      as <-<
+
 for
   :: forall a a' b b' c c' x x' m
    . Monad m
@@ -37,7 +41,7 @@ composeLoopBodies'
   -> (a -> Proxy x' x c' c m a')
 composeLoopBodies' = flip composeLoopBodies
 
-await :: forall a m. Monad m => Consumer a m a
+await :: forall a m. Monad m => Consumer_ a m a
 await = request unit
 
 -- (~<)
@@ -79,5 +83,28 @@ composePipes'
   -> Proxy a'   a c'   c m r
 composePipes' = flip composePipes
 
-yield :: forall m a. Monad m => a -> Producer a m Unit
+yield :: forall m a. Monad m => a -> Producer_ a m Unit
 yield = respond
+
+{-| Consume the first value from a 'Producer'
+    'next' either fails with a 'Left' if the 'Producer' terminates or succeeds
+    with a 'Right' providing the next value and the remainder of the 'Producer'.
+-}
+next :: forall a m r. Monad m => Producer a m r -> m (Either r (Tuple a (Producer a m r)))
+next = go
+  where
+    go p = case p of
+        Request v _  -> closed v
+        Respond a fu -> return (Right (Tuple a (fu unit)))
+        M         m  -> m >>= go
+        Pure    r    -> return (Left r)
+
+-- | Convert a 'F.Foldable' to a 'Producer'
+-- | XXX: This should return `Producer_`, but we get a escaped type variable
+-- |      error.
+each :: forall a f m. (Monad m, Foldable f) => f a -> Producer_ a m Unit
+each = F.foldr (\a p -> yield a >>= const p) (return unit)
+
+-- | Discards a value
+discard :: forall a m. Monad m => a -> m Unit
+discard _ = return unit
