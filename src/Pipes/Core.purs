@@ -72,6 +72,7 @@ module Pipes.Core (
 
 import Prelude
 import Pipes.Internal
+import Control.Lazy
 import Pipes.Internal (Proxy (), X(), closed) as I
 
 type Effect      = Proxy X Unit Unit X
@@ -99,7 +100,7 @@ runEffect = go
 respond :: forall m a a' x x'. Monad m => a -> Proxy x' x a' a m a'
 respond a = Respond a Pure
 
-infixl 3 composeResponse         as //>
+infixl 4 composeResponse         as //>
 infixr 4 composeResponse'        as />/
 infixl 5 composeRequest          as >\\
 infixr 4 composeRequest'         as \>\

@@ -4,6 +4,7 @@ import Prelude
 import Pipes.Core
 import Pipes.Internal (Proxy(..))
 import Data.Foldable (class Foldable)
+import Control.Apply ((*>))
 import Data.Tuple (Tuple(..))
 import Data.Either (Either(..))
 import Data.Foldable as F
@@ -100,10 +101,8 @@ next = go
         Pure    r    -> return (Left r)
 
 -- | Convert a 'F.Foldable' to a 'Producer'
--- | XXX: This should return `Producer_`, but we get a escaped type variable
--- |      error.
 each :: forall a f m. (Monad m, Foldable f) => f a -> Producer_ a m Unit
-each = F.foldr (\a p -> yield a >>= const p) (return unit)
+each xs = F.foldr (\a p -> yield a *> p) (return unit) xs
 
 -- | Discards a value
 discard :: forall a m. Monad m => a -> m Unit
