@@ -1,6 +1,7 @@
 module Pipes.Core (
   -- * Proxy Monad Transformer
     runEffect
+  , runEffectRec
 
   -- * Categories
 
@@ -72,8 +73,9 @@ module Pipes.Core (
 
 import Prelude
 import Pipes.Internal
-import Control.Lazy
 import Pipes.Internal (Proxy (), X(), closed) as I
+import Data.Either (Either(..))
+import Control.Monad.Rec.Class (class MonadRec, tailRecM)
 
 type Effect      = Proxy X Unit Unit X
 type Producer b  = Proxy X Unit Unit b
@@ -96,6 +98,14 @@ runEffect = go
         Respond v _ -> closed v
         M       m   -> m >>= go
         Pure    r   -> return r
+
+runEffectRec :: forall m r. (MonadRec m) => Effect m r -> m r
+runEffectRec = tailRecM go
+  where
+  go (Request v _) = Right <$> closed v
+  go (Respond v _) = Right <$> closed v
+  go (Pure r)      = return (Right r)
+  go (M mr)        = Left <$> mr
 
 respond :: forall m a a' x x'. Monad m => a -> Proxy x' x a' a m a'
 respond a = Respond a Pure
