@@ -1,6 +1,7 @@
 module Pipes.Prelude where
 
 import Prelude
+import Debug.Trace
 import Pipes
 import Pipes.Core
 import Pipes.Internal
