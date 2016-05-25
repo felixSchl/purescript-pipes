@@ -16,6 +16,7 @@
     "purescript-transformers": "~0.8.4",
     "purescript-debug": "~0.1.7",
     "purescript-tuples": "~0.4.0",
-    "purescript-lists": "~0.7.10"
+    "purescript-lists": "~0.7.10",
+    "purescript-mmorph": "~1.0.0"
   }
 }

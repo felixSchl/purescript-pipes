@@ -6,5 +6,7 @@
 This port is "fairly complete", however is **lacking a port of the following**:
 
 * The `ListT` implementation found in pipes.
-* The monad morph instances. I think this could be added fairly easily thanks to
-  [purescript-mmorph](https://github.com/Thimoteus/purescript-mmorph).
+* A couple of instances for the `Proxy` type in `Pipes.Internal`:
+    * `MonadWriter`
+    * `MonadPlus`
+    * `MonadAlternative`

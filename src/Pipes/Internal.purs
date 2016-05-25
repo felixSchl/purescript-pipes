@@ -2,7 +2,12 @@ module Pipes.Internal where
 
 import Prelude
 import Data.Monoid (class Monoid, mempty)
-import Control.Monad.Trans (class MonadTrans)
+import Data.Tuple (Tuple(Tuple))
+import Control.Monad.Eff.Class (class MonadEff, liftEff)
+import Control.Monad.Trans (class MonadTrans, lift)
+import Control.Monad.Reader.Class (class MonadReader, local, ask)
+import Control.Monad.State.Class (class MonadState, get, put, state)
+import Control.Monad.Morph (class MFunctor, class MMonad)
 
 data Proxy a' a b' b m r
   = Request a' (a  -> Proxy a' a b' b m r)
@@ -52,6 +57,47 @@ instance semigroupProxy :: (Monad m, Semigroup r) => Semigroup (Proxy a' a b' b 
 
 instance monadTransProxy :: MonadTrans (Proxy a' a b' b) where
   lift m = M (Pure <$> m)
+
+instance proxyMFunctor :: MFunctor (Proxy a' a b' b) where
+    hoist nat p0 = go (observe p0)
+      where
+        go p = case p of
+            Request a' fa  -> Request a' (\a  -> go (fa  a ))
+            Respond b  fb' -> Respond b  (\b' -> go (fb' b'))
+            M          m   -> M (nat (m >>= \p' -> return (go p')))
+            Pure    r      -> Pure r
+
+instance proxyMMonad :: MMonad (Proxy a' a b' b) where
+    embed f = go
+      where
+        go p = case p of
+            Request a' fa  -> Request a' (\a  -> go (fa  a ))
+            Respond b  fb' -> Respond b  (\b' -> go (fb' b'))
+            M          m   -> f m >>= go
+            Pure    r      -> Pure r
+
+instance proxyMonadEff :: MonadEff e m => MonadEff e (Proxy a' a b' b m) where
+    liftEff m = M (liftEff (m >>= \r -> return (Pure r)))
+
+
+instance proxyMonadReader :: MonadReader r m => MonadReader r (Proxy a' a b' b m) where
+    ask = lift ask
+    local f = go
+        where
+          go p = case p of
+              Request a' fa  -> Request a' (\a  -> go (fa  a ))
+              Respond b  fb' -> Respond b  (\b' -> go (fb' b'))
+              Pure    r      -> Pure r
+              M       m      -> M (local f m >>= \r -> return (go r))
+
+instance proxyMonadState :: MonadState s m => MonadState s (Proxy a' a b' b m) where
+    state = lift <<< state
+
+-- TODO:
+-- Port/Write instances for
+--  * MonadWriter
+--  * MonadPlus
+--  * MonadAlternative
 
 observe :: forall m a' a b' b m r
         .  Monad m => Proxy a' a b' b m r -> Proxy a' a b' b m r
