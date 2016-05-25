@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "scripts": {
+    "postinstall": "bower install",
+    "build": "pulp build && rimraf docs && pulp docs"
+  }
+}
