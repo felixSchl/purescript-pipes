@@ -14,11 +14,11 @@ import Data.Tuple (Tuple(..))
 import Control.Monad.Trans (lift)
 import Control.Monad (when)
 
--- | Repeat a monadic action indefinitely, 'yield'ing each result
+-- | Repeat a monadic action indefinitely, `yield`ing each result
 repeatM :: forall a m r. Monad m => m a -> Producer_ a m r
 repeatM m = lift m >~ cat
 
--- | Repeat a monadic action a fixed number of times, 'yield'ing each result
+-- | Repeat a monadic action a fixed number of times, `yield`ing each result
 replicateM :: forall a m. Monad m => Int -> m a -> Producer_ a m Unit
 replicateM n m = lift m >~ take n
 
@@ -26,7 +26,7 @@ replicateM n m = lift m >~ take n
 mapM_ :: forall a m r. Monad m => (a -> m Unit) -> Consumer_ a m r
 mapM_ f = for cat (\a -> lift (f a))
 
--- | 'discard' all incoming values
+-- | `discard` all incoming values
 drain :: forall a m r. Monad m => Consumer_ a m r
 drain = for cat discard
 
@@ -54,17 +54,17 @@ mapFoldable :: forall a b m t r
 mapFoldable f = for cat (\a -> each (f a))
 
 
--- | filter only forwards values that satisfy the predicate.
+-- | `filter` only forwards values that satisfy the predicate.
 filter :: forall a m r. Monad m => (a -> Boolean) -> Pipe a a m r
 filter predicate = for cat $ \a -> when (predicate a) (yield a)
 
--- |filterM only forwards values that satisfy the monadic predicate
+-- |`filterM` only forwards values that satisfy the monadic predicate
 filterM :: forall a m r. Monad m => (a -> m Boolean) -> Pipe a a m r
 filterM predicate = for cat $ \a -> do
     b <- lift (predicate a)
     when b (yield a)
 
--- | take n only allows n values to pass through
+-- | `take n` only allows n values to pass through
 take :: forall a m. Monad m => Int -> Pipe a a m Unit
 take = loop where
   loop 0 = return unit
@@ -73,8 +73,8 @@ take = loop where
     yield a
     loop (n - 1)
 
-{-| takeWhile  allows values to pass downstream so long as they satisfy
-    the predicate p.
+{-| `takeWhile` allows values to pass downstream so long as they satisfy
+    the predicate `p`.
 -}
 takeWhile :: forall a m. Monad m => (a -> Boolean) -> Pipe a a m Unit
 takeWhile predicate = go
@@ -87,7 +87,7 @@ takeWhile predicate = go
                 go
             else return unit
 
-{-| takeWhile' is a version of takeWhile that returns the value failing
+{-| `takeWhile'` is a version of `takeWhile` that returns the value failing
     the predicate.
 -}
 takeWhile' :: forall a m. Monad m => (a -> Boolean) -> Pipe a a m a
@@ -172,7 +172,7 @@ chain f = for cat $ \a -> do
     lift (f a)
     yield a
 
--- | Convert 'Show'able values to 'String's
+-- | Convert `Show`able values to `String`s
 show :: forall a m r. (Monad m, Show a) => Pipe a String m r
 show = map Prelude.show
 
@@ -181,7 +181,7 @@ show = map Prelude.show
 seq :: forall a m r. Monad m => Pipe a a m r
 seq = for cat $ \a -> yield $ a
 
--- | Fold of the elements of a 'Producer'
+-- | Fold of the elements of a `Producer`
 fold
   :: forall a b x m
    . Monad m
@@ -194,7 +194,7 @@ fold step begin done p0 = go p0 begin
         M          m  -> m >>= \p' -> go p' x
         Pure    _     -> return (done x)
 
--- | Fold of the elements of a 'Producer' that preserves the return value
+-- | Fold of the elements of a `Producer` that preserves the return value
 fold'
   :: forall a b x m r
    . Monad m
@@ -207,7 +207,7 @@ fold' step begin done p0 = go p0 begin
         M          m  -> m >>= \p' -> go p' x
         Pure    r     -> return $ Tuple (done x) r
 
--- | Monadic fold of the elements of a 'Producer'
+-- | Monadic fold of the elements of a `Producer`
 foldM
   :: forall a b x m r
    . Monad m
@@ -224,7 +224,7 @@ foldM step begin done p0 = do
         M          m  -> m >>= \p' -> go p' x
         Pure    _     -> done x
 
--- | Monadic fold of the elements of a 'Producer'
+-- | Monadic fold of the elements of a `Producer`
 foldM'
   :: forall a b x m r
    . Monad m
@@ -251,33 +251,33 @@ all predicate p = null $ p >-> filter (\a -> not (predicate a))
 any :: forall a m. Monad m => (a -> Boolean) -> Producer a m Unit -> m Boolean
 any predicate p = liftM1 not $ null (p >-> filter predicate)
 
--- | Determines whether all elements are 'True'
+-- | Determines whether all elements are `True`
 and :: forall m. Monad m => Producer Boolean m Unit -> m Boolean
 and = all id
 
--- | Determines whether any element is 'True'
+-- | Determines whether any element is `True`
 or :: forall m. Monad m => Producer Boolean m Unit -> m Boolean
 or = any id
 
--- | elem returns 'True' if p has an element equal to a, 'False' otherwise
+-- | elem returns `True` if p has an element equal to a, `False` otherwise
 elem :: forall a m. (Monad m, Eq a) => a -> Producer a m Unit -> m Boolean
 elem a = any (a ==)
 
--- | notElem returns 'False' if p has an element equal to a, 'True' otherwise
+-- | notElem returns `False` if p has an element equal to a, `True` otherwise
 notElem :: forall a m. (Monad m, Eq a) => a -> Producer a m Unit -> m Boolean
 notElem a = all (a /=)
 
--- | Find the first element of a 'Producer' that satisfies the predicate
+-- | Find the first element of a `Producer` that satisfies the predicate
 find :: forall a m. Monad m => (a -> Boolean) -> Producer a m Unit -> m (Maybe a)
 find predicate p = head (p >-> filter predicate)
 
-{-| Find the index of the first element of a 'Producer' that satisfies the
+{-| Find the index of the first element of a `Producer` that satisfies the
     predicate
 -}
 findIndex :: forall a m. Monad m => (a -> Boolean) -> Producer a m Unit -> m (Maybe Int)
 findIndex predicate p = head (p >-> findIndices predicate)
 
--- | Retrieve the first element from a 'Producer'
+-- | Retrieve the first element from a `Producer`
 head :: forall a m. Monad m => Producer a m Unit -> m (Maybe a)
 head p = do
     x <- next p
@@ -285,11 +285,11 @@ head p = do
         Left   _          -> Nothing
         Right (Tuple a _) -> Just a
 
--- | Index into a 'Producer'
+-- | Index into a `Producer`
 index :: forall a m. Monad m => Int -> Producer a m Unit -> m (Maybe a)
 index n p = head (p >-> drop n)
 
--- | Retrieve the last element from a 'Producer'
+-- | Retrieve the last element from a `Producer`
 last :: forall a m. Monad m => Producer a m Unit -> m (Maybe a)
 last p0 = do
     x <- next p0
@@ -303,11 +303,11 @@ last p0 = do
             Left   _            -> return (Just a)
             Right (Tuple a' p') -> go a' p'
 
--- | Count the number of elements in a 'Producer'
+-- | Count the number of elements in a `Producer`
 length :: forall a m. Monad m => Producer a m Unit -> m Int
 length = fold (\n _ -> n + 1) 0 id
 
--- | Find the maximum element of a 'Producer'
+-- | Find the maximum element of a `Producer`
 maximum :: forall a m. (Monad m, Ord a) => Producer a m Unit -> m (Maybe a)
 maximum = fold step Nothing id
   where
@@ -317,7 +317,7 @@ maximum = fold step Nothing id
     max x y | x >= y    = x
             | otherwise = y
 
--- | Find the minimum element of a 'Producer'
+-- | Find the minimum element of a `Producer`
 minimum :: forall a m. (Monad m, Ord a) => Producer a m Unit -> m (Maybe a)
 minimum = fold step Nothing id
   where
@@ -327,7 +327,7 @@ minimum = fold step Nothing id
     min x y | x < y     = x
             | otherwise = y
 
--- | Determine if a 'Producer' is empty
+-- | Determine if a `Producer` is empty
 null :: forall a m. Monad m => Producer a m Unit -> m Boolean
 null p = do
     x <- next p
@@ -335,17 +335,7 @@ null p = do
         Left  _ -> true
         Right _ -> false
 
--- | Compute the sum of the elements of a 'Producer'
--- XXX: ERROR: 'could not match type a0 with type Int'
--- sum :: forall a m. (Monad m, Num a) => Producer a m Unit -> m a
--- sum = fold (+) 0 id
-
--- | Compute the product of the elements of a 'Producer'
--- XXX: ERROR: 'could not match type a0 with type Int'
--- product :: forall a m. (Monad m, Num a) => Producer a m Unit -> m a
--- product = fold (*) 1 id
-
--- | Convert a pure 'Producer' into a list
+-- | Convert a pure `Producer` into a list
 toList :: forall a. Producer a Identity Unit -> List a
 toList prod0 = (go prod0) (:) Nil
   where

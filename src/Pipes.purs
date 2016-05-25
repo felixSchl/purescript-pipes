@@ -87,9 +87,9 @@ composePipes' = flip composePipes
 yield :: forall m a. Monad m => a -> Producer_ a m Unit
 yield = respond
 
-{-| Consume the first value from a 'Producer'
-    'next' either fails with a 'Left' if the 'Producer' terminates or succeeds
-    with a 'Right' providing the next value and the remainder of the 'Producer'.
+{-| Consume the first value from a `Producer`
+    `next` either fails with a `Left` if the `Producer` terminates or succeeds
+    with a `Right` providing the next value and the remainder of the `Producer`.
 -}
 next :: forall a m r. Monad m => Producer a m r -> m (Either r (Tuple a (Producer a m r)))
 next = go
@@ -100,7 +100,7 @@ next = go
         M         m  -> m >>= go
         Pure    r    -> return (Left r)
 
--- | Convert a 'F.Foldable' to a 'Producer'
+-- | Convert a `F.Foldable` to a `Producer`
 each :: forall a f m. (Monad m, Foldable f) => f a -> Producer_ a m Unit
 each xs = F.foldr (\a p -> yield a *> p) (return unit) xs
 
