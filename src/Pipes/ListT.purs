@@ -6,18 +6,21 @@ import Control.Alternative (class Alternative)
 import Control.Apply ((*>))
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Except.Trans
-    (class MonadError, class MonadTrans, lift, catchError, throwError)
+    (ExceptT, runExceptT, class MonadError, class MonadTrans, lift, catchError, throwError)
+import Control.Monad.Maybe.Trans (MaybeT, runMaybeT)
 import Control.Monad.Reader.Class (class MonadReader, local, ask)
 import Control.Monad.Rec.Class (class MonadRec)
 import Control.Monad.State.Class (class MonadState, state)
 import Control.Monad.Writer.Class (class MonadWriter, listen, pass, writer)
 import Control.MonadPlus (class MonadPlus)
 import Control.Plus (class Plus, empty)
+import Data.Either (Either(Left, Right))
+import Data.Maybe (Maybe(Nothing, Just))
 import Data.Monoid (class Monoid, mempty)
 import Data.Tuple (Tuple(Tuple))
 
-import Pipes (yield, for)
-import Pipes.Core (Producer, runEffect, runEffectRec)
+import Pipes (discard, for, yield)
+import Pipes.Core (Producer, Producer_, runEffect, runEffectRec, (>\\))
 import Pipes.Internal (Proxy(Pure, M, Respond, Request))
 
 
@@ -31,6 +34,9 @@ runListT l = runEffect (enumerate (l *> empty))
 
 runListTRec :: forall a m. (MonadRec m) => ListT m a -> m Unit
 runListTRec l = runEffectRec (enumerate (l *> empty))
+
+every :: forall a m t. (Monad m, Enumerable t) => t m a -> Producer_ a m Unit
+every it = discard >\\ enumerate (toListT it)
 
 instance listTFunctor :: (Monad m) => Functor (ListT m) where
     map f (Select p) = Select (for p (yield <<< f))
@@ -99,3 +105,23 @@ instance listTMonadReader :: (MonadReader r m) => MonadReader r (ListT m) where
 instance listTMonadError :: (MonadError e m) => MonadError e (ListT m) where
     throwError = lift <<< throwError
     catchError (Select l) f = Select (l `catchError` (enumerate <<< f))
+
+class Enumerable t where
+    toListT :: forall a m. Monad m => t m a -> ListT m a
+
+instance listTEnumerable :: Enumerable ListT where
+    toListT = id
+
+instance maybeTEnumerable :: Enumerable MaybeT where
+    toListT m = Select $ do
+        x <- lift $ runMaybeT m
+        case x of
+            Nothing -> return unit
+            Just a  -> yield a
+
+instance errorTEnumerable :: Enumerable (ExceptT e) where
+    toListT m = Select $ do
+        x <- lift $ runExceptT m
+        case x of
+            Left  _ -> return unit
+            Right a -> yield a
