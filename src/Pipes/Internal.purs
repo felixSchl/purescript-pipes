@@ -3,12 +3,16 @@ module Pipes.Internal where
 import Prelude
 import Data.Monoid (class Monoid, mempty)
 import Data.Tuple (Tuple(Tuple))
+import Control.Alt (class Alt, (<|>))
+import Control.Alternative (class Alternative)
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Trans (class MonadTrans, lift)
 import Control.Monad.Reader.Class (class MonadReader, local, ask)
 import Control.Monad.State.Class (class MonadState, get, put, state)
 import Control.Monad.Writer.Class (class MonadWriter, listen, pass, writer)
 import Control.Monad.Morph (class MFunctor, class MMonad)
+import Control.MonadPlus (class MonadPlus)
+import Control.Plus (class Plus, empty)
 
 data Proxy a' a b' b m r
   = Request a' (a  -> Proxy a' a b' b m r)
@@ -115,10 +119,19 @@ instance proxyMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (Proxy
             M m              -> M (do Tuple p' w' <- listen m
                                       return (go p' (append w w')))
 
--- TODO:
--- Port/Write instances for
---  * MonadPlus
---  * MonadAlternative
+instance proxyAlt :: (MonadPlus m) => Alt (Proxy a' a b' b m) where
+    alt (Request a' fa) p = Request a' (\a  -> (fa a) <|> p)
+    alt (Respond b fb') p = Respond b  (\b' -> (fb' b') <|> p)
+    alt (Pure r)        p = Pure r
+    alt (M m)           p = M ((do p' <- m
+                                   return (p' <|> p)) <|> return p)
+
+instance proxyPlus :: (MonadPlus m) => Plus (Proxy a' a b' b m) where
+    empty = lift empty
+
+instance proxyAlternative :: (MonadPlus m) => Alternative (Proxy a' a b' b m)
+
+instance proxyMonadPlus :: (MonadPlus m) => MonadPlus (Proxy a' a b' b m)
 
 observe :: forall m a' a b' b m r
         .  Monad m => Proxy a' a b' b m r -> Proxy a' a b' b m r
