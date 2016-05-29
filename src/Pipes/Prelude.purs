@@ -345,3 +345,10 @@ toList prod0 = (go prod0) (:) Nil
         Respond a fu -> Cons a (go (fu unit) Cons nil)
         M         m  -> go (runIdentity m) Cons nil
         Pure    _    -> nil
+
+toListM :: forall a m. Monad m => Producer a m Unit -> m (List a)
+toListM = fold step begin done
+  where
+    step x a = x <<< (a : _)
+    begin = id
+    done x = x Nil
