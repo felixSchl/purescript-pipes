@@ -3,6 +3,7 @@
 > Port of the haskell pipes library by Gabriel Gonzalez to purescript:
 > https://hackage.haskell.org/package/pipes
 
-This port is "fairly complete", however is **lacking a port of the following**:
+## Thanks to
 
-* The `ListT` implementation found in pipes.
+* @scott-christopher for porting `ListT` and writing the `MonadError`,
+  `MonadWriter`, `MonadPlus` and `Alternative` instances for `Proxy`!
