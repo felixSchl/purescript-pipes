@@ -7,6 +7,7 @@ import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Trans (class MonadTrans, lift)
 import Control.Monad.Reader.Class (class MonadReader, local, ask)
 import Control.Monad.State.Class (class MonadState, get, put, state)
+import Control.Monad.Writer.Class (class MonadWriter, listen, pass, writer)
 import Control.Monad.Morph (class MFunctor, class MMonad)
 
 data Proxy a' a b' b m r
@@ -93,9 +94,29 @@ instance proxyMonadReader :: MonadReader r m => MonadReader r (Proxy a' a b' b m
 instance proxyMonadState :: MonadState s m => MonadState s (Proxy a' a b' b m) where
     state = lift <<< state
 
+instance proxyMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (Proxy a' a b' b m) where
+    writer = lift <<< writer
+
+    listen p0 = go p0 mempty
+        where
+        go p w = case p of
+            Request a' fa -> Request a' (\a  -> go (fa  a ) w)
+            Respond b fb' -> Respond b  (\b' -> go (fb' b') w)
+            Pure r        -> Pure (Tuple r w)
+            M m           -> M (do Tuple p' w' <- listen m
+                                   return (go p' (append w w')))
+
+    pass p0 = go p0 mempty
+        where
+        go p w = case p of
+            Request a' fa    -> Request a' (\a  -> go (fa  a ) w)
+            Respond b fb'    -> Respond b  (\b' -> go (fb' b') w)
+            Pure (Tuple r f) -> M (pass (return (Tuple (Pure r) \_ -> f w)))
+            M m              -> M (do Tuple p' w' <- listen m
+                                      return (go p' (append w w')))
+
 -- TODO:
 -- Port/Write instances for
---  * MonadWriter
 --  * MonadPlus
 --  * MonadAlternative
 
