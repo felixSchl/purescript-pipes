@@ -3,5 +3,10 @@
   "scripts": {
     "postinstall": "bower install",
     "build": "pulp build && rimraf docs && pulp docs"
+  },
+  "devDependencies": {
+    "bower": "^1.7.9",
+    "pulp": "^8.2.1",
+    "rimraf": "^2.4.1"
   }
 }
