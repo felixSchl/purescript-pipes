@@ -8,11 +8,12 @@ import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Except.Trans
     (ExceptT, runExceptT, class MonadError, class MonadTrans, lift, catchError, throwError)
 import Control.Monad.Maybe.Trans (MaybeT, runMaybeT)
-import Control.Monad.Reader.Class (class MonadReader, local, ask)
+import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
 import Control.Monad.Rec.Class (class MonadRec)
 import Control.Monad.State.Class (class MonadState, state)
-import Control.Monad.Writer.Class (class MonadWriter, listen, pass, writer)
+import Control.Monad.Writer.Class (class MonadTell, class MonadWriter, listen, pass, tell)
 import Control.MonadPlus (class MonadPlus)
+import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus, empty)
 import Data.Either (Either(Left, Right))
 import Data.Maybe (Maybe(Nothing, Just))
@@ -59,11 +60,13 @@ instance listTAlt :: (Monad m) => Alt (ListT m) where
     alt (Select p1) (Select p2) = Select (p1 *> p2)
 
 instance listTPlus :: (Monad m) => Plus (ListT m) where
-    empty = Select (return unit)
+    empty = Select (pure unit)
 
 instance listTAlternative :: (Monad m) => Alternative (ListT m)
 
-instance listTMonadPlus :: (Monad m) => MonadPlus (ListT m)
+-- XXX: these won't compile
+-- instance listTMonadPlus :: (Monad m) => MonadPlus (ListT m)
+-- instance listTMonadZero :: (Monad m) => MonadZero (ListT m)
 
 instance listTMonadEff :: (MonadEff eff m) => MonadEff eff (ListT m) where
     liftEff = lift <<< liftEff
@@ -77,29 +80,33 @@ instance listTMonoid :: (Monad m) => Monoid (ListT m a) where
 instance listTMonadState :: (MonadState s m) => MonadState s (ListT m) where
     state = lift <<< state
 
-instance listTMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (ListT m) where
-    writer = lift <<< writer
+instance listTMonadTell :: (Monoid w, MonadTell w m) => MonadTell w (ListT m) where
+    tell = lift <<< tell
 
+instance listTMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (ListT m) where
     listen (Select p) = Select (go p mempty)
         where
         go (Request a' fa) w = Request a' (\a -> go (fa a) w)
         go (Respond b fb') w = Respond (Tuple b w) (\b' -> go (fb' b') w)
-        go (M m)           w = M (do Tuple p' w' <- listen m
-                                     return (go p' (append w w')))
+        go (M m)           w = M (do
+                                    Tuple p' w' <- listen m
+                                    pure (go p' (append w w')))
         go (Pure r)        w = Pure r
 
     pass (Select p) = Select (go p mempty)
         where
         go (Request a' fa)           w = Request a' (\a -> go (fa a) w)
-        go (Respond (Tuple b f) fb') w = M (pass (return (Tuple _1 _2)))
+        go (Respond (Tuple b f) fb') w = M (pass (pure (Tuple _1 _2)))
                                          where _1 = Respond b (\b' -> go (fb' b') (f w))
                                                _2 = \_ -> f w
         go (M m)                     w = M (do Tuple p' w' <- listen m
-                                               return (go p' (append w w')))
+                                               pure (go p' (append w w')))
         go (Pure r)                  w = Pure r
 
-instance listTMonadReader :: (MonadReader r m) => MonadReader r (ListT m) where
+instance listTMonadAsk :: (MonadAsk r m) => MonadAsk r (ListT m) where
     ask = lift ask
+
+instance listTMonadReader :: (MonadReader r m) => MonadReader r (ListT m) where
     local f (Select l) = Select (local f l)
 
 instance listTMonadError :: (MonadError e m) => MonadError e (ListT m) where
@@ -116,12 +123,12 @@ instance maybeTEnumerable :: Enumerable MaybeT where
     toListT m = Select $ do
         x <- lift $ runMaybeT m
         case x of
-            Nothing -> return unit
+            Nothing -> pure unit
             Just a  -> yield a
 
 instance errorTEnumerable :: Enumerable (ExceptT e) where
     toListT m = Select $ do
         x <- lift $ runExceptT m
         case x of
-            Left  _ -> return unit
+            Left  _ -> pure unit
             Right a -> yield a

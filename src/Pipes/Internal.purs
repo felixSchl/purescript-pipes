@@ -7,12 +7,13 @@ import Control.Alt (class Alt, (<|>))
 import Control.Alternative (class Alternative)
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Except.Trans (class MonadError, catchError, throwError)
-import Control.Monad.Trans (class MonadTrans, lift)
-import Control.Monad.Reader.Class (class MonadReader, local, ask)
+import Control.Monad.Trans.Class (class MonadTrans, lift)
+import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
 import Control.Monad.State.Class (class MonadState, get, put, state)
-import Control.Monad.Writer.Class (class MonadWriter, listen, pass, writer)
+import Control.Monad.Writer.Class (class MonadWriter, class MonadTell, listen, pass, tell)
 import Control.Monad.Morph (class MFunctor, class MMonad)
 import Control.MonadPlus (class MonadPlus)
+import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus, empty)
 
 data Proxy a' a b' b m r
@@ -70,7 +71,7 @@ instance proxyMFunctor :: MFunctor (Proxy a' a b' b) where
         go p = case p of
             Request a' fa  -> Request a' (\a  -> go (fa  a ))
             Respond b  fb' -> Respond b  (\b' -> go (fb' b'))
-            M          m   -> M (nat (m >>= \p' -> return (go p')))
+            M          m   -> M (nat (m >>= \p' -> pure (go p')))
             Pure    r      -> Pure r
 
 instance proxyMMonad :: MMonad (Proxy a' a b' b) where
@@ -83,56 +84,63 @@ instance proxyMMonad :: MMonad (Proxy a' a b' b) where
             Pure    r      -> Pure r
 
 instance proxyMonadEff :: MonadEff e m => MonadEff e (Proxy a' a b' b m) where
-    liftEff m = M (liftEff (m >>= \r -> return (Pure r)))
+    liftEff m = M (liftEff (m >>= \r -> pure (Pure r)))
 
+instance proxyMonadAsd :: MonadAsk r m => MonadAsk r (Proxy a' a b' b m) where
+    ask = lift ask
 
 instance proxyMonadReader :: MonadReader r m => MonadReader r (Proxy a' a b' b m) where
-    ask = lift ask
     local f = go
         where
           go p = case p of
               Request a' fa  -> Request a' (\a  -> go (fa  a ))
               Respond b  fb' -> Respond b  (\b' -> go (fb' b'))
               Pure    r      -> Pure r
-              M       m      -> M (local f m >>= \r -> return (go r))
+              M       m      -> M (local f m >>= \r -> pure (go r))
 
 instance proxyMonadState :: MonadState s m => MonadState s (Proxy a' a b' b m) where
     state = lift <<< state
 
-instance proxyMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (Proxy a' a b' b m) where
-    writer = lift <<< writer
+instance proxyMonadTell :: (Monoid w, MonadTell w m) => MonadTell w (Proxy a' a b' b m) where
+    tell = lift <<< tell
 
+instance proxyMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (Proxy a' a b' b m) where
     listen p0 = go p0 mempty
         where
         go p w = case p of
             Request a' fa -> Request a' (\a  -> go (fa  a ) w)
             Respond b fb' -> Respond b  (\b' -> go (fb' b') w)
             Pure r        -> Pure (Tuple r w)
-            M m           -> M (do Tuple p' w' <- listen m
-                                   return (go p' (append w w')))
+            M m           -> M (do
+                                Tuple p' w' <- listen m
+                                pure (go p' (append w w')))
 
     pass p0 = go p0 mempty
         where
         go p w = case p of
             Request a' fa    -> Request a' (\a  -> go (fa  a ) w)
             Respond b fb'    -> Respond b  (\b' -> go (fb' b') w)
-            Pure (Tuple r f) -> M (pass (return (Tuple (Pure r) \_ -> f w)))
-            M m              -> M (do Tuple p' w' <- listen m
-                                      return (go p' (append w w')))
+            Pure (Tuple r f) -> M (pass (pure (Tuple (Pure r) \_ -> f w)))
+            M m              -> M (do
+                                    Tuple p' w' <- listen m
+                                    pure (go p' (append w w')))
 
 instance proxyAlt :: (MonadPlus m) => Alt (Proxy a' a b' b m) where
     alt (Request a' fa) p = Request a' (\a  -> (fa a) <|> p)
     alt (Respond b fb') p = Respond b  (\b' -> (fb' b') <|> p)
     alt (Pure r)        p = Pure r
-    alt (M m)           p = M ((do p' <- m
-                                   return (p' <|> p)) <|> return p)
+    alt (M m)           p = M ((do
+                                  p' <- m
+                                  pure (p' <|> p)) <|> pure p)
 
 instance proxyPlus :: (MonadPlus m) => Plus (Proxy a' a b' b m) where
     empty = lift empty
 
 instance proxyAlternative :: (MonadPlus m) => Alternative (Proxy a' a b' b m)
 
-instance proxyMonadPlus :: (MonadPlus m) => MonadPlus (Proxy a' a b' b m)
+-- XXX: these won't compile
+-- instance proxyMonadPlus :: (MonadPlus m) => MonadPlus (Proxy a' a b' b m)
+-- instance proxyMonadZero :: (MonadZero m) => MonadZero (Proxy a' a b' b m)
 
 instance proxyMonadError :: (MonadError e m) => MonadError e (Proxy a' a b' b m) where
     throwError = lift <<< throwError
@@ -140,17 +148,18 @@ instance proxyMonadError :: (MonadError e m) => MonadError e (Proxy a' a b' b m)
     catchError (Request a' fa) f = Request a' (\a  -> catchError (fa  a ) f)
     catchError (Respond b fb') f = Respond b  (\b' -> catchError (fb' b') f)
     catchError (Pure r)        f = Pure r
-    catchError (M m)           f = M ((do p' <- m
-                                          return (catchError p' f)) `catchError` (return <<< f))
+    catchError (M m)           f = M ((do
+                                          p' <- m
+                                          pure (catchError p' f)) `catchError` (pure <<< f))
 
-observe :: forall m a' a b' b m r
+observe :: forall m a' a b' b r
         .  Monad m => Proxy a' a b' b m r -> Proxy a' a b' b m r
 observe p0 = M (go p0) where
     go p = case p of
-        Request a' fa  -> return (Request a' (observe <<< fa))
-        Respond b  fb' -> return (Respond b  (observe <<< fb'))
+        Request a' fa  -> pure (Request a' (observe <<< fa))
+        Respond b  fb' -> pure (Respond b  (observe <<< fb'))
         M           m  -> m >>= go
-        Pure        r  -> return (Pure r)
+        Pure        r  -> pure (Pure r)
 
 newtype X = X X
 

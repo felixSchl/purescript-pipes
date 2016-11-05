@@ -75,7 +75,7 @@ import Prelude
 import Pipes.Internal
 import Pipes.Internal (Proxy (), X(), closed) as I
 import Data.Either (Either(..))
-import Control.Monad.Rec.Class (class MonadRec, tailRecM)
+import Control.Monad.Rec.Class (class MonadRec, tailRecM, Step(Loop, Done))
 
 type Effect      = Proxy X Unit Unit X
 type Producer b  = Proxy X Unit Unit b
@@ -97,15 +97,15 @@ runEffect = go
         Request v _ -> closed v
         Respond v _ -> closed v
         M       m   -> m >>= go
-        Pure    r   -> return r
+        Pure    r   -> pure r
 
 runEffectRec :: forall m r. (MonadRec m) => Effect m r -> m r
 runEffectRec = tailRecM go
   where
-  go (Request v _) = Right <$> closed v
-  go (Respond v _) = Right <$> closed v
-  go (Pure r)      = return (Right r)
-  go (M mr)        = Left <$> mr
+  go (Request v _) = Done <$> closed v
+  go (Respond v _) = Done <$> closed v
+  go (Pure r)      = pure (Done r)
+  go (M mr)        = Loop <$> mr
 
 respond :: forall m a a' x x'. Monad m => a -> Proxy x' x a' a m a'
 respond a = Respond a Pure
@@ -223,7 +223,7 @@ composePush'
 composePush' p fb = case p of
     Request a' fa  -> Request a' (\a -> fa a >>~ fb)
     Respond b  fb' -> fb' +>> fb b
-    M          m   -> M (m >>= \p' -> return (p' >>~ fb))
+    M          m   -> M (m >>= \p' -> pure (p' >>~ fb))
     Pure       r   -> Pure r
 
 reflect

@@ -96,14 +96,14 @@ next = go
   where
     go p = case p of
         Request v _  -> closed v
-        Respond a fu -> return (Right (Tuple a (fu unit)))
+        Respond a fu -> pure (Right (Tuple a (fu unit)))
         M         m  -> m >>= go
-        Pure    r    -> return (Left r)
+        Pure    r    -> pure (Left r)
 
 -- | Convert a `F.Foldable` to a `Producer`
 each :: forall a f m. (Monad m, Foldable f) => f a -> Producer_ a m Unit
-each xs = F.foldr (\a p -> yield a *> p) (return unit) xs
+each xs = F.foldr (\a p -> yield a *> p) (pure unit) xs
 
 -- | Discards a value
 discard :: forall a m. Monad m => a -> m Unit
-discard _ = return unit
+discard _ = pure unit

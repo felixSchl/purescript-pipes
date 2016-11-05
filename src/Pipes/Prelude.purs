@@ -1,17 +1,19 @@
 module Pipes.Prelude where
 
 import Prelude
+import Prelude (show) as Prelude
 import Pipes
 import Pipes.Core
 import Pipes.Internal
 import Data.List (List(..), (:))
 import Data.Identity
+import Data.Newtype (unwrap)
 import Data.Maybe (Maybe(..))
 import Data.Foldable as F
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable)
 import Data.Tuple (Tuple(..))
-import Control.Monad.Trans (lift)
+import Control.Monad.Trans.Class (lift)
 import Control.Monad (when)
 
 -- | Repeat a monadic action indefinitely, `yield`ing each result
@@ -67,7 +69,7 @@ filterM predicate = for cat $ \a -> do
 -- | `take n` only allows n values to pass through
 take :: forall a m. Monad m => Int -> Pipe a a m Unit
 take = loop where
-  loop 0 = return unit
+  loop 0 = pure unit
   loop n = do
     a <- await
     yield a
@@ -85,7 +87,7 @@ takeWhile predicate = go
             then do
                 yield a
                 go
-            else return unit
+            else pure unit
 
 {-| `takeWhile'` is a version of `takeWhile` that returns the value failing
     the predicate.
@@ -99,7 +101,7 @@ takeWhile' predicate = go
             then do
                 yield a
                 go
-            else return a
+            else pure a
 
 -- | drop discards n values going downstream
 drop :: forall a m r. Monad m => Int -> Pipe a a m r
@@ -192,7 +194,7 @@ fold step begin done p0 = go p0 begin
         Request v  _  -> closed v
         Respond a  fu -> go (fu unit) $ step x a
         M          m  -> m >>= \p' -> go p' x
-        Pure    _     -> return (done x)
+        Pure    _     -> pure (done x)
 
 -- | Fold of the elements of a `Producer` that preserves the return value
 fold'
@@ -205,7 +207,7 @@ fold' step begin done p0 = go p0 begin
         Request v  _  -> closed v
         Respond a  fu -> go (fu unit) $ step x a
         M          m  -> m >>= \p' -> go p' x
-        Pure    r     -> return $ Tuple (done x) r
+        Pure    r     -> pure $ Tuple (done x) r
 
 -- | Monadic fold of the elements of a `Producer`
 foldM
@@ -241,7 +243,7 @@ foldM' step begin done p0 = do
         M          m  -> m >>= \p' -> go p' x
         Pure    r     -> do
             b <- done x
-            return (Tuple b r)
+            pure (Tuple b r)
 
 -- | all determines whether all the elements of p satisfy the predicate.
 all :: forall a m. Monad m => (a -> Boolean) -> Producer a m Unit -> m Boolean
@@ -261,11 +263,11 @@ or = any id
 
 -- | elem returns `True` if p has an element equal to a, `False` otherwise
 elem :: forall a m. (Monad m, Eq a) => a -> Producer a m Unit -> m Boolean
-elem a = any (a ==)
+elem a = any (a == _)
 
 -- | notElem returns `False` if p has an element equal to a, `True` otherwise
 notElem :: forall a m. (Monad m, Eq a) => a -> Producer a m Unit -> m Boolean
-notElem a = all (a /=)
+notElem a = all (a /= _)
 
 -- | Find the first element of a `Producer` that satisfies the predicate
 find :: forall a m. Monad m => (a -> Boolean) -> Producer a m Unit -> m (Maybe a)
@@ -281,7 +283,7 @@ findIndex predicate p = head (p >-> findIndices predicate)
 head :: forall a m. Monad m => Producer a m Unit -> m (Maybe a)
 head p = do
     x <- next p
-    return $ case x of
+    pure $ case x of
         Left   _          -> Nothing
         Right (Tuple a _) -> Just a
 
@@ -294,13 +296,13 @@ last :: forall a m. Monad m => Producer a m Unit -> m (Maybe a)
 last p0 = do
     x <- next p0
     case x of
-        Left   _           -> return Nothing
+        Left   _           -> pure Nothing
         Right (Tuple a p') -> go a p'
   where
     go a p = do
         x <- next p
         case x of
-            Left   _            -> return (Just a)
+            Left   _            -> pure (Just a)
             Right (Tuple a' p') -> go a' p'
 
 -- | Count the number of elements in a `Producer`
@@ -331,7 +333,7 @@ minimum = fold step Nothing id
 null :: forall a m. Monad m => Producer a m Unit -> m Boolean
 null p = do
     x <- next p
-    return $ case x of
+    pure $ case x of
         Left  _ -> true
         Right _ -> false
 
@@ -343,7 +345,7 @@ toList prod0 = (go prod0) (:) Nil
       case prod of
         Request v _  -> closed v
         Respond a fu -> Cons a (go (fu unit) Cons nil)
-        M         m  -> go (runIdentity m) Cons nil
+        M         m  -> go (unwrap m) Cons nil
         Pure    _    -> nil
 
 toListM :: forall a m. Monad m => Producer a m Unit -> m (List a)
