@@ -15,6 +15,7 @@
     "purescript-transformers": "^2.0.1",
     "purescript-tuples": "^3.0.0",
     "purescript-lists": "^3.2.0",
-    "purescript-tailrec": "^2.0.0"
+    "purescript-tailrec": "^2.0.0",
+    "purescript-mmorph": "felixschl/purescript-mmorph#e3cbc72abe8c3dcafdf1648cb63ddb1fac1dcb7f"
   }
 }
