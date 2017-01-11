@@ -11,10 +11,10 @@
     "output"
   ],
   "dependencies": {
-    "purescript-monoid": "~2.0.0",
-    "purescript-transformers": "~2.0.1",
-    "purescript-tuples": "~3.0.0",
-    "purescript-lists": "~3.2.0",
-    "purescript-mmorph": "~2.0.0"
+    "purescript-monoid": "^2.0.0",
+    "purescript-transformers": "^2.0.1",
+    "purescript-tuples": "^3.0.0",
+    "purescript-lists": "^3.2.0",
+    "purescript-tailrec": "^2.0.0"
   }
 }
