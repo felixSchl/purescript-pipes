@@ -1,8 +1,18 @@
 module Pipes.Prelude where
 
 import Prelude
-import Prelude (show) as Prelude
+import Prelude as Prelude
 import Pipes
+  ( (>->)
+  , (>~)
+  , await
+  , each
+  , cat
+  , for
+  , next
+  , yield
+  )
+import Pipes as Pipes
 import Pipes.Core
 import Pipes.Internal
 import Data.List (List(..), (:))
@@ -30,7 +40,7 @@ mapM_ f = for cat (\a -> lift (f a))
 
 -- | `discard` all incoming values
 drain :: forall a m r. Monad m => Consumer_ a m r
-drain = for cat discard
+drain = for cat Pipes.discard
 
 -- | Apply a function to all values flowing downstream
 map :: forall a b m r. Monad m => (a -> b) -> Pipe a b m r
