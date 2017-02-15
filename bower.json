@@ -4,6 +4,10 @@
   "moduleType": [
     "node"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/felixSchl/purescript-pipes.git"
+  },
   "license": "MIT",
   "ignore": [
     "**/.*",
