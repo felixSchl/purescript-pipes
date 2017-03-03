@@ -71,10 +71,9 @@ module Pipes.Core (
   , module I
   ) where
 
-import Prelude
-import Pipes.Internal
+import Prelude (class Monad, Unit, pure, (<$>), (<<<), (>>=))
+import Pipes.Internal (Proxy(..), X, closed)
 import Pipes.Internal (Proxy (), X(), closed) as I
-import Data.Either (Either(..))
 import Control.Monad.Rec.Class (class MonadRec, tailRecM, Step(Loop, Done))
 
 type Effect      = Proxy X Unit Unit X

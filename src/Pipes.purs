@@ -1,10 +1,9 @@
 module Pipes where
 
-import Prelude
-import Pipes.Core
+import Prelude (class Monad, Unit, const, flip, pure, unit, (*>), (>>=))
+import Pipes.Core (Consumer_, Pipe, Producer, Producer_, closed, pull, request, respond, (+>>), (//>), (/>/), (>\\))
 import Pipes.Internal (Proxy(..))
 import Data.Foldable (class Foldable)
-import Control.Apply ((*>))
 import Data.Tuple (Tuple(..))
 import Data.Either (Either(..))
 import Data.Foldable as F
@@ -17,11 +16,11 @@ infixl 7 composePipes       as >->
 infixr 7 composePipes'      as <-<
 
 for
-  :: forall a a' b b' c c' x x' m
+  :: forall a b b' c c' x x' m
    . Monad m
-  =>       Proxy x' x b' b m a'
+  =>       Proxy x' x b' b m a
   -> (b -> Proxy x' x c' c m b')
-  ->       Proxy x' x c' c m a'
+  ->       Proxy x' x c' c m a
 for = (//>)
 
 -- (~>)
@@ -47,7 +46,7 @@ await = request unit
 
 -- (~<)
 replaceAwait
-  :: forall a a' b b' y y' c m
+  :: forall a a' b y y' c m
    . Monad m
   => Proxy a'   a y' y m b
   -> Proxy Unit b y' y m c
@@ -56,7 +55,7 @@ replaceAwait p1 p2 = const p1 >\\ p2
 
 -- (>~)
 replaceAwait'
-  :: forall a a' b b' y y' c m
+  :: forall a a' b y y' c m
    . Monad m
   => Proxy Unit b y' y m c
   -> Proxy a'   a y' y m b
