@@ -9,11 +9,10 @@ import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Except.Trans (class MonadError, catchError, throwError)
 import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
-import Control.Monad.State.Class (class MonadState, get, put, state)
+import Control.Monad.State.Class (class MonadState, state)
 import Control.Monad.Writer.Class (class MonadWriter, class MonadTell, listen, pass, tell)
 import Control.Monad.Morph (class MFunctor, class MMonad)
 import Control.MonadPlus (class MonadPlus)
-import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus, empty)
 
 data Proxy a' a b' b m r

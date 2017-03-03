@@ -1,6 +1,6 @@
 module Pipes.Prelude where
 
-import Prelude
+import Prelude hiding (map)
 import Prelude as Prelude
 import Pipes
   ( (>->)
@@ -13,18 +13,16 @@ import Pipes
   , yield
   )
 import Pipes as Pipes
-import Pipes.Core
-import Pipes.Internal
+import Pipes.Core (Consumer_, Pipe, Producer, Producer_)
+import Pipes.Internal (Proxy(..), closed)
 import Data.List (List(..), (:))
-import Data.Identity
+import Data.Identity (Identity)
 import Data.Newtype (unwrap)
 import Data.Maybe (Maybe(..))
-import Data.Foldable as F
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable)
 import Data.Tuple (Tuple(..))
 import Control.Monad.Trans.Class (lift)
-import Control.Monad (when)
 
 -- | Repeat a monadic action indefinitely, `yield`ing each result
 repeatM :: forall a m r. Monad m => m a -> Producer_ a m r
@@ -221,7 +219,7 @@ fold' step begin done p0 = go p0 begin
 
 -- | Monadic fold of the elements of a `Producer`
 foldM
-  :: forall a b x m r
+  :: forall a b x m
    . Monad m
   => (x -> a -> m x) -> m x -> (x -> m b) -> Producer a m Unit -> m b
 foldM step begin done p0 = do

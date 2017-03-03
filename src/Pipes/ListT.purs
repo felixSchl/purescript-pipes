@@ -1,9 +1,8 @@
 module Pipes.ListT where
 
-import Prelude
+import Prelude hiding (discard)
 import Control.Alt (class Alt, alt)
 import Control.Alternative (class Alternative)
-import Control.Apply ((*>))
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Except.Trans
     (ExceptT, runExceptT, class MonadError, class MonadTrans, lift, catchError, throwError)
@@ -12,8 +11,6 @@ import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask
 import Control.Monad.Rec.Class (class MonadRec)
 import Control.Monad.State.Class (class MonadState, state)
 import Control.Monad.Writer.Class (class MonadTell, class MonadWriter, listen, pass, tell)
-import Control.MonadPlus (class MonadPlus)
-import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus, empty)
 import Data.Either (Either(Left, Right))
 import Data.Maybe (Maybe(Nothing, Just))
