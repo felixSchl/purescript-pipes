@@ -21,7 +21,7 @@
     "purescript-tuples": "^4.0.0",
     "purescript-lists": "^4.0.0",
     "purescript-tailrec": "^3.0.0",
-    "purescript-mmorph": "felixschl/purescript-mmorph#e3cbc72abe8c3dcafdf1648cb63ddb1fac1dcb7f",
+    "purescript-mmorph": "^3.0.0",
     "purescript-prelude": "^3.0.0"
   }
 }

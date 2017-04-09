@@ -6,7 +6,7 @@ import Data.Tuple (Tuple(Tuple))
 import Control.Alt (class Alt, (<|>))
 import Control.Alternative (class Alternative)
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
-import Control.Monad.Except.Trans (class MonadError, catchError, throwError)
+import Control.Monad.Except.Trans (class MonadError, catchError, class MonadThrow, throwError)
 import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
 import Control.Monad.State.Class (class MonadState, state)
@@ -141,9 +141,10 @@ instance proxyAlternative :: (MonadPlus m) => Alternative (Proxy a' a b' b m)
 -- instance proxyMonadPlus :: (MonadPlus m) => MonadPlus (Proxy a' a b' b m)
 -- instance proxyMonadZero :: (MonadZero m) => MonadZero (Proxy a' a b' b m)
 
-instance proxyMonadError :: (MonadError e m) => MonadError e (Proxy a' a b' b m) where
+instance proxyMonadThrow :: (MonadThrow e m) => MonadThrow e (Proxy a' a b' b m) where
     throwError = lift <<< throwError
 
+instance proxyMonadError :: (MonadError e m) => MonadError e (Proxy a' a b' b m) where
     catchError (Request a' fa) f = Request a' (\a  -> catchError (fa  a ) f)
     catchError (Respond b fb') f = Respond b  (\b' -> catchError (fb' b') f)
     catchError (Pure r)        f = Pure r

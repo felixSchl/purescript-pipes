@@ -5,7 +5,7 @@ import Control.Alt (class Alt, alt)
 import Control.Alternative (class Alternative)
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Except.Trans
-    (ExceptT, runExceptT, class MonadError, class MonadTrans, lift, catchError, throwError)
+    (ExceptT, runExceptT, class MonadError, class MonadTrans, lift, catchError, class MonadThrow, throwError)
 import Control.Monad.Maybe.Trans (MaybeT, runMaybeT)
 import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
 import Control.Monad.Rec.Class (class MonadRec)
@@ -33,7 +33,7 @@ runListT l = runEffect (enumerate (l *> empty))
 runListTRec :: forall a m. (MonadRec m) => ListT m a -> m Unit
 runListTRec l = runEffectRec (enumerate (l *> empty))
 
-every :: forall a m t. (Monad m, Enumerable t) => t m a -> Producer_ a m Unit
+every :: forall a m t. Monad m => Enumerable t => t m a -> Producer_ a m Unit
 every it = discard >\\ enumerate (toListT it)
 
 instance listTFunctor :: (Monad m) => Functor (ListT m) where
@@ -106,8 +106,10 @@ instance listTMonadAsk :: (MonadAsk r m) => MonadAsk r (ListT m) where
 instance listTMonadReader :: (MonadReader r m) => MonadReader r (ListT m) where
     local f (Select l) = Select (local f l)
 
-instance listTMonadError :: (MonadError e m) => MonadError e (ListT m) where
+instance listTMonadThrow :: (MonadThrow e m) => MonadThrow e (ListT m) where
     throwError = lift <<< throwError
+
+instance listTMonadError :: (MonadError e m) => MonadError e (ListT m) where
     catchError (Select l) f = Select (l `catchError` (enumerate <<< f))
 
 class Enumerable t where

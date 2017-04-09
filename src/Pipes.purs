@@ -100,7 +100,7 @@ next = go
         Pure    r    -> pure (Left r)
 
 -- | Convert a `F.Foldable` to a `Producer`
-each :: forall a f m. (Monad m, Foldable f) => f a -> Producer_ a m Unit
+each :: forall a f m. Monad m => Foldable f => f a -> Producer_ a m Unit
 each xs = F.foldr (\a p -> yield a *> p) (pure unit) xs
 
 -- | Discards a value
