@@ -58,7 +58,8 @@ sequence = mapM id
      forward each element of the result.
 -}
 mapFoldable :: forall a b m t r
-             . (Monad m, Foldable t)
+             . Monad m
+            => Foldable t
             => (a -> t b)
             -> Pipe a b m r
 mapFoldable f = for cat (\a -> each (f a))
@@ -117,7 +118,7 @@ drop = loop
   where
     loop 0 = cat
     loop n =  do
-      await
+      _ <- await
       loop (n-1)
 
 {-| dropWhile discards values going downstream until one violates the
@@ -135,7 +136,7 @@ dropWhile predicate = go
                 cat
 
 -- | Flatten all 'Foldable' elements flowing downstream
-concat :: forall a m f r. (Monad m, Foldable f) => Pipe (f a) a m r
+concat :: forall a m f r. Monad m => Foldable f => Pipe (f a) a m r
 concat = for cat each
 
 -- | Outputs the indices of all elements that satisfied the predicate
@@ -183,7 +184,7 @@ chain f = for cat $ \a -> do
     yield a
 
 -- | Convert `Show`able values to `String`s
-show :: forall a m r. (Monad m, Show a) => Pipe a String m r
+show :: forall a m r. Monad m => Show a => Pipe a String m r
 show = map Prelude.show
 
 -- | Evaluate all values flowing downstream to WHNF
@@ -270,11 +271,11 @@ or :: forall m. Monad m => Producer Boolean m Unit -> m Boolean
 or = any id
 
 -- | elem returns `True` if p has an element equal to a, `False` otherwise
-elem :: forall a m. (Monad m, Eq a) => a -> Producer a m Unit -> m Boolean
+elem :: forall a m. Monad m => Eq a => a -> Producer a m Unit -> m Boolean
 elem a = any (a == _)
 
 -- | notElem returns `False` if p has an element equal to a, `True` otherwise
-notElem :: forall a m. (Monad m, Eq a) => a -> Producer a m Unit -> m Boolean
+notElem :: forall a m. Monad m => Eq a => a -> Producer a m Unit -> m Boolean
 notElem a = all (a /= _)
 
 -- | Find the first element of a `Producer` that satisfies the predicate
@@ -318,7 +319,7 @@ length :: forall a m. Monad m => Producer a m Unit -> m Int
 length = fold (\n _ -> n + 1) 0 id
 
 -- | Find the maximum element of a `Producer`
-maximum :: forall a m. (Monad m, Ord a) => Producer a m Unit -> m (Maybe a)
+maximum :: forall a m. Monad m => Ord a => Producer a m Unit -> m (Maybe a)
 maximum = fold step Nothing id
   where
     step x a = Just $ case x of
@@ -328,7 +329,7 @@ maximum = fold step Nothing id
             | otherwise = y
 
 -- | Find the minimum element of a `Producer`
-minimum :: forall a m. (Monad m, Ord a) => Producer a m Unit -> m (Maybe a)
+minimum :: forall a m. Monad m => Ord a => Producer a m Unit -> m (Maybe a)
 minimum = fold step Nothing id
   where
     step x a = Just $ case x of
