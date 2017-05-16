@@ -21,7 +21,7 @@ foo
   :: forall eff
    . Int
   -> Int
-  -> Producer_ String (Eff (eff)) Result
+  -> Producer_ String (Eff eff) Result
 foo x y = do
   myLog $ "About to compute: " <> show x <> " + " <> show y
   r <- lift $ pure $ x + y
