@@ -18,9 +18,10 @@ myLog
 myLog = yield
 
 foo
-  :: Int
+  :: forall eff
+   . Int
   -> Int
-  -> Producer_ String (Eff (console :: CONSOLE)) Result
+  -> Producer_ String (Eff (eff)) Result
 foo x y = do
   myLog $ "About to compute: " <> show x <> " + " <> show y
   r <- lift $ pure $ x + y
