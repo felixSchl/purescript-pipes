@@ -2,7 +2,8 @@
   "private": true,
   "scripts": {
     "postinstall": "bower install",
-    "build": "pulp build && rimraf docs && pulp docs"
+    "build": "pulp build && rimraf docs && pulp docs",
+    "example": "pulp run -I examples -I src -I bower_components -m example"
   },
   "devDependencies": {
     "bower": "^1.7.9",

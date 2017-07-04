@@ -10,8 +10,8 @@
 
 ## How-To
 
-Have a look at examples to see how to use it. Examples are inspired by http://www.haskellforall.com/2014/02/streaming-logging.html. Follow along that tutorial if you feel like needing a thorough explanation.
+For an in-depth overview of pipes follow the tutorial that comes with the
+Haskell pipes library. The concepts apply one to one to purescript-pipes.
 
-Each example is a directory with intructions in corresponding README.
-
-- [piped-randomInt](https://github.com/piton182/purescript-pipes/blob/pipedRandomInt/examples/piped-randomInt/)
+Also have a look at the examples that come with purescript-pipes. You can run
+them using `npm run example`.
