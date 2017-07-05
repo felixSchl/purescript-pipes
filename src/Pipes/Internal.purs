@@ -89,7 +89,7 @@ instance proxyMonadEff :: MonadEff e m => MonadEff e (Proxy a' a b' b m) where
 instance proxyMonadAff :: MonadAff e m => MonadAff e (Proxy a' a b' b m) where
     liftAff m = M (liftAff (m >>= \r -> pure (Pure r)))
 
-instance proxyMonadAsd :: MonadAsk r m => MonadAsk r (Proxy a' a b' b m) where
+instance proxyMonadAsk :: MonadAsk r m => MonadAsk r (Proxy a' a b' b m) where
     ask = lift ask
 
 instance proxyMonadReader :: MonadReader r m => MonadReader r (Proxy a' a b' b m) where
