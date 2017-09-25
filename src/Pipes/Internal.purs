@@ -12,9 +12,11 @@ import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
 import Control.Monad.State.Class (class MonadState, state)
 import Control.Monad.Writer.Class (class MonadWriter, class MonadTell, listen, pass, tell)
+import Control.Monad.Rec.Class (class MonadRec, tailRecM, Step(Loop, Done))
 import Control.Monad.Morph (class MFunctor, class MMonad)
 import Control.MonadPlus (class MonadPlus)
 import Control.Plus (class Plus, empty)
+import Unsafe.Coerce (unsafeCoerce)
 
 data Proxy a' a b' b m r
   = Request a' (a  -> Proxy a' a b' b m r)
@@ -155,6 +157,16 @@ instance proxyMonadError :: (MonadError e m) => MonadError e (Proxy a' a b' b m)
     catchError (M m)           f = M ((do
                                           p' <- m
                                           pure (catchError p' f)) `catchError` (pure <<< f))
+
+instance monadRecProxy :: Monad m => MonadRec (Proxy a' a b' b m) where
+  tailRecM f a0 = go (f a0)
+    where
+    go = case _ of
+      Pure (Loop a)  -> go (f a)
+      Pure (Done b)  -> Pure b
+      M m            -> M $ go <$> m
+      Request a' fa  -> Request a' (go <<< fa)
+      Respond b  fb' -> Respond b  (go <<< fb')
 
 observe :: forall m a' a b' b r
         .  Monad m => Proxy a' a b' b m r -> Proxy a' a b' b m r
