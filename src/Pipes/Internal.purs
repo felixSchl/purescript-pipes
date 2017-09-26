@@ -27,17 +27,17 @@ data Proxy a' a b' b m r
 instance functorProxy :: (Monad m) => Functor (Proxy a' a b' b m) where
   map f p0 = go p0 where
     go p = case p of
-      Request a' fa  -> Request a' (go <<< fa)
-      Respond b  fb' -> Respond b  (go <<< fb')
-      M           m  -> M          (go <$> m)
+      Request a' fa  -> Request a' \x -> go (fa x)
+      Respond b  fb' -> Respond b  \x -> go (fb' x)
+      M           m  -> M          (m >>= \v -> pure (go v))
       Pure        r  -> Pure       (f r)
 
 instance applyProxy :: (Monad m) => Apply (Proxy a' a b' b m) where
   apply pf0 px = go pf0 where
     go pf = case pf of
-      Request a' fa  -> Request a' (go <<< fa)
-      Respond b  fb' -> Respond b  (go <<< fb')
-      M           m  -> M          (go <$> m)
+      Request a' fa  -> Request a' \x -> go (fa x)
+      Respond b  fb' -> Respond b  \x -> go (fb' x)
+      M           m  -> M          (m >>= \v -> pure (go v))
       Pure        f  -> f <$> px
 
 instance applicativeProxy :: (Monad m) => Applicative (Proxy a' a b' b m) where
@@ -46,9 +46,9 @@ instance applicativeProxy :: (Monad m) => Applicative (Proxy a' a b' b m) where
 instance bindProxy :: (Monad m) => Bind (Proxy a' a b' b m) where
   bind p0 f = go p0 where
     go p = case p of
-      Request a' fa  -> Request a' (go <<< fa)
-      Respond b  fb' -> Respond b  (go <<< fb')
-      M           m  -> M          (go <$> m)
+      Request a' fa  -> Request a' \x -> go (fa x)
+      Respond b  fb' -> Respond b  \x -> go (fb' x)
+      M           m  -> M          (m >>= \v -> pure (go v))
       Pure        r  -> f r
 
 instance monadProxy :: (Monad m) => Monad (Proxy a' a b' b m) where
@@ -59,9 +59,9 @@ instance monoidProxy :: (Monad m, Monoid r) => Monoid (Proxy a' a b' b m r) wher
 instance semigroupProxy :: (Monad m, Semigroup r) => Semigroup (Proxy a' a b' b m r) where
   append p1 p2 = go p1 where
     go p = case p of
-      Request a' fa  -> Request a' (go <<< fa)
-      Respond b  fb' -> Respond b  (go <<< fb')
-      M           m  -> M          (go <$> m)
+      Request a' fa  -> Request a' \x -> go (fa x)
+      Respond b  fb' -> Respond b  \x -> go (fb' x)
+      M           m  -> M          (m >>= \v -> pure (go v))
       Pure       r1  -> (r1 <> _) <$> p2
 
 instance monadTransProxy :: MonadTrans (Proxy a' a b' b) where
@@ -71,8 +71,8 @@ instance proxyMFunctor :: MFunctor (Proxy a' a b' b) where
     hoist nat p0 = go (observe p0)
       where
         go p = case p of
-            Request a' fa  -> Request a' (\a  -> go (fa  a ))
-            Respond b  fb' -> Respond b  (\b' -> go (fb' b'))
+            Request a' fa  -> Request a' \x -> go (fa  x)
+            Respond b  fb' -> Respond b  \x -> go (fb' x)
             M          m   -> M (nat (m >>= \p' -> pure (go p')))
             Pure    r      -> Pure r
 
@@ -80,8 +80,8 @@ instance proxyMMonad :: MMonad (Proxy a' a b' b) where
     embed f = go
       where
         go p = case p of
-            Request a' fa  -> Request a' (\a  -> go (fa  a ))
-            Respond b  fb' -> Respond b  (\b' -> go (fb' b'))
+            Request a' fa  -> Request a' \x -> go (fa  x)
+            Respond b  fb' -> Respond b  \x -> go (fb' x)
             M          m   -> f m >>= go
             Pure    r      -> Pure r
 
@@ -164,9 +164,9 @@ instance monadRecProxy :: Monad m => MonadRec (Proxy a' a b' b m) where
     go = case _ of
       Pure (Loop a)  -> go (f a)
       Pure (Done b)  -> Pure b
-      M m            -> M $ go <$> m
-      Request a' fa  -> Request a' (go <<< fa)
-      Respond b  fb' -> Respond b  (go <<< fb')
+      M m            -> M $ m >>= \v -> pure (go v)
+      Request a' fa  -> Request a' \x -> go (fa x)
+      Respond b  fb' -> Respond b  \x -> go (fb' x)
 
 observe :: forall m a' a b' b r
         .  Monad m => Proxy a' a b' b m r -> Proxy a' a b' b m r
