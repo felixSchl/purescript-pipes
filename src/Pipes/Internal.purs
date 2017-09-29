@@ -7,6 +7,7 @@ import Control.Alt (class Alt, (<|>))
 import Control.Alternative (class Alternative)
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Aff.Class (class MonadAff, liftAff)
+import Control.Monad.IO.Class (class MonadIO, liftIO)
 import Control.Monad.Except.Trans (class MonadError, catchError, class MonadThrow, throwError)
 import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
@@ -90,6 +91,9 @@ instance proxyMonadEff :: MonadEff e m => MonadEff e (Proxy a' a b' b m) where
 
 instance proxyMonadAff :: MonadAff e m => MonadAff e (Proxy a' a b' b m) where
     liftAff m = M (liftAff (m >>= \r -> pure (Pure r)))
+
+instance proxyMonadIO :: MonadIO m => MonadIO (Proxy a' a b' b m) where
+    liftIO m = M (liftIO (m >>= \r -> pure (Pure r)))
 
 instance proxyMonadAsk :: MonadAsk r m => MonadAsk r (Proxy a' a b' b m) where
     ask = lift ask
