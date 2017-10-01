@@ -13,11 +13,10 @@ import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
 import Control.Monad.State.Class (class MonadState, state)
 import Control.Monad.Writer.Class (class MonadWriter, class MonadTell, listen, pass, tell)
-import Control.Monad.Rec.Class (class MonadRec, tailRecM, Step(Loop, Done))
+import Control.Monad.Rec.Class (class MonadRec, Step(Done, Loop))
 import Control.Monad.Morph (class MFunctor, class MMonad)
 import Control.MonadPlus (class MonadPlus)
 import Control.Plus (class Plus, empty)
-import Unsafe.Coerce (unsafeCoerce)
 
 data Proxy a' a b' b m r
   = Request a' (a  -> Proxy a' a b' b m r)

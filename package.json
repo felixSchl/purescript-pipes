@@ -6,8 +6,8 @@
     "example": "pulp run -I examples -I src -I bower_components -m Example"
   },
   "devDependencies": {
-    "bower": "^1.7.9",
-    "pulp": "^11.0.0",
-    "rimraf": "^2.4.1"
+    "bower": "^1.8.2",
+    "pulp": "^12.0.1",
+    "rimraf": "^2.6.2"
   }
 }
