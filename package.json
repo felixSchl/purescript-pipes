@@ -3,7 +3,7 @@
   "scripts": {
     "postinstall": "bower install",
     "build": "pulp build && rimraf docs && pulp docs",
-    "example": "pulp run -I examples -I src -I bower_components -m example"
+    "example": "pulp run -I examples -I src -I bower_components -m Example"
   },
   "devDependencies": {
     "bower": "^1.7.9",
