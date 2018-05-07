@@ -1,28 +1,27 @@
 module Example where
 
 import Prelude
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Control.Monad.Eff.Random (randomInt, RANDOM)
 
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Class.Console (log)
+import Effect.Random (randomInt)
 import Pipes (yield, for)
 import Pipes.Core (runEffect, Producer_)
 
 pipedRandomInt
-  :: ∀ eff
-   . Int
+  :: Int
   -> Int
-  -> Producer_ String (Eff (random :: RANDOM | eff)) Int
+  -> Producer_ String Effect Int
 pipedRandomInt x y = do
   yield $ "Generating an Int between " <> show x <> " and " <> show y <> "..."
-  r <- liftEff $ randomInt x y
+  r <- liftEffect $ randomInt x y
   yield $ "Generated " <> show r
   pure r
 
-main :: Eff (console :: CONSOLE, random :: RANDOM) Unit
+main :: Effect Unit
 main =
   let go = pipedRandomInt 1 10
    in do
-    r <- runEffect $ for go (liftEff <<< log <<< ("Log: " <> _))
+    r <- runEffect $ for go (log <<< ("Log: " <> _))
     log $ "Result: " <> show r

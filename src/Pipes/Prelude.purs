@@ -52,7 +52,7 @@ mapM f = for cat $ \a -> do
 
 -- | Convert a stream of actions to a stream of values
 sequence :: forall a m r. Monad m => Pipe (m a) a m r
-sequence = mapM id
+sequence = mapM identity
 
 {- | Apply a function to all values flowing downstream, and
      forward each element of the result.
@@ -264,11 +264,11 @@ any predicate p = liftM1 not $ null (p >-> filter predicate)
 
 -- | Determines whether all elements are `True`
 and :: forall m. Monad m => Producer Boolean m Unit -> m Boolean
-and = all id
+and = all identity
 
 -- | Determines whether any element is `True`
 or :: forall m. Monad m => Producer Boolean m Unit -> m Boolean
-or = any id
+or = any identity
 
 -- | elem returns `True` if p has an element equal to a, `False` otherwise
 elem :: forall a m. Monad m => Eq a => a -> Producer a m Unit -> m Boolean
@@ -316,11 +316,11 @@ last p0 = do
 
 -- | Count the number of elements in a `Producer`
 length :: forall a m. Monad m => Producer a m Unit -> m Int
-length = fold (\n _ -> n + 1) 0 id
+length = fold (\n _ -> n + 1) 0 identity
 
 -- | Find the maximum element of a `Producer`
 maximum :: forall a m. Monad m => Ord a => Producer a m Unit -> m (Maybe a)
-maximum = fold step Nothing id
+maximum = fold step Nothing identity
   where
     step x a = Just $ case x of
         Nothing -> a
@@ -330,7 +330,7 @@ maximum = fold step Nothing id
 
 -- | Find the minimum element of a `Producer`
 minimum :: forall a m. Monad m => Ord a => Producer a m Unit -> m (Maybe a)
-minimum = fold step Nothing id
+minimum = fold step Nothing identity
   where
     step x a = Just $ case x of
         Nothing -> a
@@ -361,5 +361,5 @@ toListM :: forall a m. Monad m => Producer a m Unit -> m (List a)
 toListM = fold step begin done
   where
     step x a = x <<< (a : _)
-    begin = id
+    begin = identity
     done x = x Nil

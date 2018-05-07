@@ -1,22 +1,21 @@
 module Pipes.Internal where
 
 import Prelude
-import Data.Monoid (class Monoid, mempty)
-import Data.Tuple (Tuple(Tuple))
+
 import Control.Alt (class Alt, (<|>))
 import Control.Alternative (class Alternative)
-import Control.Monad.Eff.Class (class MonadEff, liftEff)
-import Control.Monad.Aff.Class (class MonadAff, liftAff)
-import Control.Monad.IO.Class (class MonadIO, liftIO)
 import Control.Monad.Except.Trans (class MonadError, catchError, class MonadThrow, throwError)
-import Control.Monad.Trans.Class (class MonadTrans, lift)
-import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
-import Control.Monad.State.Class (class MonadState, state)
-import Control.Monad.Writer.Class (class MonadWriter, class MonadTell, listen, pass, tell)
-import Control.Monad.Rec.Class (class MonadRec, Step(Done, Loop))
 import Control.Monad.Morph (class MFunctor, class MMonad)
+import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
+import Control.Monad.Rec.Class (class MonadRec, Step(Done, Loop))
+import Control.Monad.State.Class (class MonadState, state)
+import Control.Monad.Trans.Class (class MonadTrans, lift)
+import Control.Monad.Writer.Class (class MonadWriter, class MonadTell, listen, pass, tell)
 import Control.MonadPlus (class MonadPlus)
 import Control.Plus (class Plus, empty)
+import Data.Tuple (Tuple(Tuple))
+import Effect.Aff.Class (class MonadAff, liftAff)
+import Effect.Class (class MonadEffect, liftEffect)
 
 data Proxy a' a b' b m r
   = Request a' (a  -> Proxy a' a b' b m r)
@@ -51,7 +50,7 @@ instance bindProxy :: (Monad m) => Bind (Proxy a' a b' b m) where
       M           m  -> M          (m >>= \v -> pure (go v))
       Pure        r  -> f r
 
-instance monadProxy :: (Monad m) => Monad (Proxy a' a b' b m) where
+instance monadProxy :: (Monad m) => Monad (Proxy a' a b' b m)
 
 instance monoidProxy :: (Monad m, Monoid r) => Monoid (Proxy a' a b' b m r) where
   mempty = Pure mempty
@@ -85,14 +84,11 @@ instance proxyMMonad :: MMonad (Proxy a' a b' b) where
             M          m   -> f m >>= go
             Pure    r      -> Pure r
 
-instance proxyMonadEff :: MonadEff e m => MonadEff e (Proxy a' a b' b m) where
-    liftEff m = M (liftEff (m >>= \r -> pure (Pure r)))
+instance proxyMonadEffect :: MonadEffect m => MonadEffect (Proxy a' a b' b m) where
+    liftEffect m = M (liftEffect (m >>= \r -> pure (Pure r)))
 
-instance proxyMonadAff :: MonadAff e m => MonadAff e (Proxy a' a b' b m) where
+instance proxyMonadAff :: MonadAff m => MonadAff (Proxy a' a b' b m) where
     liftAff m = M (liftAff (m >>= \r -> pure (Pure r)))
-
-instance proxyMonadIO :: MonadIO m => MonadIO (Proxy a' a b' b m) where
-    liftIO m = M (liftIO (m >>= \r -> pure (Pure r)))
 
 instance proxyMonadAsk :: MonadAsk r m => MonadAsk r (Proxy a' a b' b m) where
     ask = lift ask

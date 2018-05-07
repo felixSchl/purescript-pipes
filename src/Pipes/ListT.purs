@@ -1,11 +1,10 @@
 module Pipes.ListT where
 
 import Prelude hiding (discard)
+
 import Control.Alt (class Alt, alt)
 import Control.Alternative (class Alternative)
-import Control.Monad.Eff.Class (class MonadEff, liftEff)
-import Control.Monad.Except.Trans
-    (ExceptT, runExceptT, class MonadError, class MonadTrans, lift, catchError, class MonadThrow, throwError)
+import Control.Monad.Except.Trans (ExceptT, runExceptT, class MonadError, class MonadTrans, lift, catchError, class MonadThrow, throwError)
 import Control.Monad.Maybe.Trans (MaybeT, runMaybeT)
 import Control.Monad.Reader.Class (class MonadAsk, class MonadReader, local, ask)
 import Control.Monad.Rec.Class (class MonadRec)
@@ -14,9 +13,8 @@ import Control.Monad.Writer.Class (class MonadTell, class MonadWriter, listen, p
 import Control.Plus (class Plus, empty)
 import Data.Either (Either(Left, Right))
 import Data.Maybe (Maybe(Nothing, Just))
-import Data.Monoid (class Monoid, mempty)
 import Data.Tuple (Tuple(Tuple))
-
+import Effect.Class (class MonadEffect, liftEffect)
 import Pipes (discard, for, yield)
 import Pipes.Core (Producer, Producer_, runEffect, runEffectRec, (>\\))
 import Pipes.Internal (Proxy(Pure, M, Respond, Request))
@@ -65,8 +63,8 @@ instance listTAlternative :: (Monad m) => Alternative (ListT m)
 -- instance listTMonadPlus :: (Monad m) => MonadPlus (ListT m)
 -- instance listTMonadZero :: (Monad m) => MonadZero (ListT m)
 
-instance listTMonadEff :: (MonadEff eff m) => MonadEff eff (ListT m) where
-    liftEff = lift <<< liftEff
+instance listTMonadEffect :: (MonadEffect m) => MonadEffect (ListT m) where
+    liftEffect = lift <<< liftEffect
 
 instance listTSemigroup :: (Monad m) => Semigroup (ListT m a) where
     append = alt
@@ -116,7 +114,7 @@ class Enumerable t where
     toListT :: forall a m. Monad m => t m a -> ListT m a
 
 instance listTEnumerable :: Enumerable ListT where
-    toListT = id
+    toListT = identity
 
 instance maybeTEnumerable :: Enumerable MaybeT where
     toListT m = Select $ do

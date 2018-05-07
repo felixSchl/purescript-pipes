@@ -1,8 +1,7 @@
 language: node_js
+sudo: required
 dist: trusty
-node_js:
-  - 4.2
-  - 5.2
+node_js: 10
 env:
   - PATH=$HOME/purescript:$PATH
 install:
