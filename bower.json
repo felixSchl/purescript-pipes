@@ -16,16 +16,16 @@
     "output"
   ],
   "dependencies": {
-    "purescript-transformers": "^4.0.0",
-    "purescript-tuples": "^5.0.0",
-    "purescript-lists": "^5.0.0",
-    "purescript-tailrec": "^4.0.0",
-    "purescript-mmorph": "^5.0.0",
-    "purescript-prelude": "^4.0.0",
-    "purescript-aff": "^5.0.0"
+    "purescript-transformers": "^5.0.0",
+    "purescript-tuples": "^6.0.0",
+    "purescript-lists": "^6.0.0",
+    "purescript-tailrec": "^5.0.0",
+    "purescript-mmorph": "git://github.com/fsoikin/purescript-mmorph#purescript-0.14",
+    "purescript-prelude": "^5.0.0",
+    "purescript-aff": "^6.0.0"
   },
   "devDependencies": {
-    "purescript-console": "^4.1.0",
-    "purescript-random": "^4.0.0"
+    "purescript-console": "^5.0.0",
+    "purescript-random": "^5.0.0"
   }
 }
