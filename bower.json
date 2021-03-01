@@ -20,7 +20,7 @@
     "purescript-tuples": "^6.0.0",
     "purescript-lists": "^6.0.0",
     "purescript-tailrec": "^5.0.0",
-    "purescript-mmorph": "master",
+    "purescript-mmorph": "v6.0.0",
     "purescript-prelude": "^5.0.0",
     "purescript-aff": "^6.0.0"
   },
