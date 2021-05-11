@@ -132,7 +132,7 @@ instance proxyMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (Proxy
 instance proxyAlt :: (MonadPlus m) => Alt (Proxy a' a b' b m) where
     alt (Request a' fa) p = Request a' (\a  -> (fa a) <|> p)
     alt (Respond b fb') p = Respond b  (\b' -> (fb' b') <|> p)
-    alt (Pure r)        p = Pure r
+    alt (Pure r)        _ = Pure r
     alt (M m)           p = M ((do
                                   p' <- m
                                   pure (p' <|> p)) <|> pure p)
@@ -152,7 +152,7 @@ instance proxyMonadThrow :: (MonadThrow e m) => MonadThrow e (Proxy a' a b' b m)
 instance proxyMonadError :: (MonadError e m) => MonadError e (Proxy a' a b' b m) where
     catchError (Request a' fa) f = Request a' (\a  -> catchError (fa  a ) f)
     catchError (Respond b fb') f = Respond b  (\b' -> catchError (fb' b') f)
-    catchError (Pure r)        f = Pure r
+    catchError (Pure r)        _ = Pure r
     catchError (M m)           f = M ((do
                                           p' <- m
                                           pure (catchError p' f)) `catchError` (pure <<< f))

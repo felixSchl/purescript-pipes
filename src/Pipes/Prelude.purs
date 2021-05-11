@@ -350,7 +350,7 @@ null p = do
 toList :: forall a. Producer a Identity Unit -> List a
 toList prod0 = (go prod0) (:) Nil
   where
-    go prod cons nil =
+    go prod _ nil =
       case prod of
         Request v _  -> closed v
         Respond a fu -> Cons a (go (fu unit) Cons nil)
