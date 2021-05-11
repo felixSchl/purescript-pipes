@@ -86,7 +86,7 @@ instance listTMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (ListT
         go (M m)           w = M (do
                                     Tuple p' w' <- listen m
                                     pure (go p' (append w w')))
-        go (Pure r)        w = Pure r
+        go (Pure r)        _ = Pure r
 
     pass (Select p) = Select (go p mempty)
         where
@@ -96,7 +96,7 @@ instance listTMonadWriter :: (Monoid w, MonadWriter w m) => MonadWriter w (ListT
                                                _2 = \_ -> f w
         go (M m)                     w = M (do Tuple p' w' <- listen m
                                                pure (go p' (append w w')))
-        go (Pure r)                  w = Pure r
+        go (Pure r)                  _ = Pure r
 
 instance listTMonadAsk :: (MonadAsk r m) => MonadAsk r (ListT m) where
     ask = lift ask
