@@ -1,3 +1,5 @@
+[![build](https://github.com/felixSchl/purescript-pipes/actions/workflows/build.yml/badge.svg)](https://github.com/felixSchl/purescript-pipes/actions/workflows/build.yml)
+
 # Purescript pipes
 
 > Port of the haskell pipes library by Gabriel Gonzalez to purescript:
