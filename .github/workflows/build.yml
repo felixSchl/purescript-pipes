@@ -16,9 +16,9 @@ jobs:
     - uses: actions/cache@v2
       with:
         path: |
-          .spago
           output
           node_modules
+          bower_components
         key: build-atrifacts-v1-${{ hashFiles('package.json', 'bower.json') }}
     - uses: actions/setup-node@v1
       with:
