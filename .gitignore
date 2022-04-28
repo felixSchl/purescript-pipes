@@ -7,3 +7,4 @@
 /.psci*
 /src/.webpack.js
 /docs/
+/.psc-ide-port
