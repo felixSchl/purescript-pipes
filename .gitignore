@@ -8,3 +8,6 @@
 /src/.webpack.js
 /docs/
 /.psc-ide-port
+/.spago/
+/spago.lock
+/generated-docs/

@@ -1,14 +1,13 @@
 {
   "private": true,
   "scripts": {
-    "postinstall": "bower install",
-    "build": "pulp build && rimraf docs && pulp docs",
-    "example": "pulp run -I examples -I src -I bower_components -m Example"
+    "postinstall": "spago install",
+    "build": "spago build -p pipes && rimraf generated-docs && spago docs",
+    "example": "spago build -p pipes-examples --purs-args 'examples/*.purs' && node --input-type=module -e \"import('./output/Example/index.js').then(m => m.main())\""
   },
   "devDependencies": {
-    "bower": "^1.8.12",
-    "pulp": "^16.0.0-0",
-    "purescript": "^0.15.0-0",
+    "spago": "1.0.5",
+    "purescript": "^0.15.4",
     "rimraf": "^3.0.0"
   }
 }
