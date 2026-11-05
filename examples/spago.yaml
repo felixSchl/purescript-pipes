@@ -1,0 +1,6 @@
+package:
+  name: pipes-examples
+  dependencies:
+    - console: ">=6.0.0 <7.0.0"
+    - pipes: "*"
+    - random: ">=6.0.0 <7.0.0"
